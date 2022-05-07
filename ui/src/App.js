@@ -5,7 +5,7 @@ import React, {useState, useEffect} from "react";
 
 function App() {
 
-  const [notes, setNotes] = useState([null]);
+  const [notes, setNotes] = useState(null);
 
   useEffect(() =>{
     axios.get(
@@ -18,15 +18,15 @@ function App() {
       setNotes(response.data);
     }
 
-    )
-
-
+    );
 
   }, [])
 
   return (
     <div className="App">
-     
+      {!!notes && notes.map((note, index) => (
+        <div key={index}>{note.title} - {note.info} </div>
+      ))}
     </div>
   );
 }
