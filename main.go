@@ -1,35 +1,17 @@
 package main
 
-import(
-	"fmt"
-	"log"
+import (
+	"net/http"
+
+	"notice/controllers"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-pg/pg/v10"
+
+	"notice/services"
 )
 
-func pgDataBase() (con *pg.DB) {
-    address := fmt.Sprintf("%s:%s", "localhost", "5432")
-	options := &pg.Options{
-		User: "postgres",
-		Password: "",
-		Addr: address,
-		Database: "notice",
-		PoolSize: 50,
-	}
-
-	con = pg.Connect(options)
-	if con == nil {
-		log.Fatalf("Не удалось подключиться к postgres")
-	}
-	return
-}
-
 func Api(c *gin.Context) {
-    db := pgDataBase()
-
-	db.Close()
-
-    c.JSON(200, gin.H{
+	c.JSON(200, gin.H{
 		"api": "notice",
 	})
 }
@@ -37,6 +19,29 @@ func Api(c *gin.Context) {
 func main() {
 	r := gin.Default()
 	r.GET("/api", Api)
-	r.Run("0.0.0.0:9090")
 
+	r.LoadHTMLGlob("./ui/build/index.html");
+	r.Static("public", "./ui/build")
+
+	r.GET("/", func(c *gin.Context){
+		c.HTML(http.StatusOK, "index.html", gin.H{})
+	})
+
+	r.Use(service.CORS())
+
+	r.GET("/api", Api)
+
+	rApi := r.Group("/api")
+	{
+		rApi.GET("/notes", controller.GetNotes)
+		rNote := rApi.Group("/note")
+		{
+			rNote.POST("/add", controller.AddNote)
+			rNote.GET("/:id", controller.GetNote)
+			rNote.PUT("/edit", controller.EditNote)
+			rNote.DELETE("/:id", controller.DelNote)
+		}
+	}
+
+	r.Run("0.0.0.0:9090")
 }
